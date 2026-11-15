@@ -8,7 +8,9 @@ Planear e integrar duas novas entidades, **Sponsors** e **Experts**, na área de
 
 ## Projeto de referência
 
-Para a realização desta tarefa, foi descarregado o código do Animalec, integrado-o neste repositório como base de trabalho, com o front-end e o back-end organizados em pastas distintas.
+Para a realização desta tarefa, foi descarregado o código do Animalec, integrando-o neste repositório como base de trabalho, com o front-end e o back-end organizados em pastas distintas.
+
+Repositório utilizado como referência: [josthelvish/Animalec](https://github.com/josthelvish/Animalec).
 
 ## Estrutura do projeto
 
@@ -17,6 +19,9 @@ Tarefa_3.1b/
 ├── Animalec/
 │   ├── backend/       # API Node.js / Express
 │   └── frontend/      # Aplicação Vue.js 2
+├── docs/
+│   ├── Mockups_LP_Animalec.pdf
+│   └── Wireframes_LP_Animalec.pdf
 ├── .gitignore
 └── README.md
 ```
@@ -71,6 +76,14 @@ Endereços locais:
 
 - **Front-end:** http://localhost:8081
 - **Back-end:** http://localhost:8080
+
+## Estado do trabalho
+
+- [x] ~~Análise da interface original do Animalec.~~
+- [x] ~~Elaboração dos wireframes.~~
+- [x] ~~Elaboração dos mockups.~~
+- [ ] Implementação dos protótipos HTML5.
+- [ ] Testes de navegação e visualização.
 
 ## Autor
 
