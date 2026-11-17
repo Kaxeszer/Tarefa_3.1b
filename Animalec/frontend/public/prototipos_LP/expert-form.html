@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>GESTÃO DE ESPECIALISTAS | ANIMALEC</title>
+    <link rel="icon" href="/animalec.ico"/>
+    <link rel="stylesheet" href="/css/animalec.css"/>
+    <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css?family=Montserrat:400,700"
+    />
+    <link
+            rel="stylesheet"
+            href="https://use.fontawesome.com/releases/v5.6.3/css/all.css"
+            integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/"
+            crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="prototipos.css"/>
+</head>
+<body data-kind="expert" data-view="form">
+<header>
+    <nav
+            class="navbar navbar-expand-lg navbar-dark bg-dark site-header"
+            aria-label="Navegação principal"
+    >
+        <a class="brand" href="/" title="Página principal do Animalec"
+        ><img src="animalec_line.png" width="1408" height="311" alt="ANIMALEC"
+        /></a>
+        <button
+                class="navbar-toggler"
+                type="button"
+                data-toggle="collapse"
+                data-target="#navigation"
+                aria-controls="navigation"
+                aria-expanded="false"
+                aria-label="Abrir ou fechar menu"
+        >
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navigation">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/animals">ANIMAIS</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/quizzes">QUIZZES</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/#contacts">CONTACTOS</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin">ADMIN</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</header>
+<main class="page-section container">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col">
+                <h1 class="page-section-heading mt-5" id="title">GESTÃO DE ESPECIALISTAS</h1>
+            </div>
+        </div>
+        <div class="row text-center">
+            <div class="col">
+                <div class="divider-custom" aria-hidden="true">
+                    <div class="divider-custom-line"></div>
+                    <div class="divider-custom-icon"><i class="fas fa-star"></i></div>
+                    <div class="divider-custom-line"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="workspace col-12 col-lg-10 mx-auto">
+            <div id="feedback" role="status" aria-live="polite"></div>
+            <noscript
+            ><p class="alert alert-warning">
+                Ativa o JavaScript para consultar e gerir os registos.
+            </p>
+                <a href="/admin">Voltar ao menu ADMIN</a></noscript
+            >
+            <div id="content"></div>
+        </div>
+    </div>
+</main>
+<script src="/js/jquery.js"></script>
+<script src="/js/bootstrap.bundle.js"></script>
+<script src="prototipos.js"></script>
+</body>
+</html>

@@ -17,8 +17,10 @@ Repositório utilizado como referência: [josthelvish/Animalec](https://github.c
 ```text
 Tarefa_3.1b/
 ├── Animalec/
-│   ├── backend/       # API Node.js / Express
-│   └── frontend/      # Aplicação Vue.js 2
+│   ├── backend/                  # API Node.js / Express
+│   └── frontend/                 # Aplicação Vue.js 2
+│       └── public/
+│           └── prototipos_LP/   # Protótipos HTML5
 ├── docs/
 │   ├── Mockups_LP_Animalec.pdf
 │   └── Wireframes_LP_Animalec.pdf
@@ -32,6 +34,7 @@ Tarefa_3.1b/
 - **Back-end:** Node.js e Express
 - **Base de dados:** MongoDB / Mongoose
 - **Gestão de dependências:** npm
+- **Protótipos:** HTML5, CSS3 e JavaScript
 
 ## Instalação e execução
 
@@ -77,13 +80,22 @@ Endereços locais:
 - **Front-end:** http://localhost:8081
 - **Back-end:** http://localhost:8080
 
+## Protótipos HTML5
+
+Foram desenvolvidos seis protótipos HTML5 para as entidades **Sponsors** e **Experts**, integrados na área de administração do Animalec.
+
+Os protótipos incluem páginas de listagem, criação, edição e consulta de registos, bem como funcionalidades de remoção. A interface foi desenvolvida com base nos wireframes e mockups apresentados na pasta `docs/`, procurando manter a identidade visual da aplicação original.
+
+A implementação permite demonstrar a navegação e as principais operações previstas para as duas entidades.
+
 ## Estado do trabalho
 
 - [x] ~~Análise da interface original do Animalec.~~
 - [x] ~~Elaboração dos wireframes.~~
 - [x] ~~Elaboração dos mockups.~~
-- [ ] Implementação dos protótipos HTML5.
-- [ ] Testes de navegação e visualização.
+- [x] ~~Implementação dos protótipos HTML5.~~
+- [x] ~~Integração dos protótipos na área de administração.~~
+- [X] ~~Testes de navegação e visualização.~~
 
 ## Autor
 

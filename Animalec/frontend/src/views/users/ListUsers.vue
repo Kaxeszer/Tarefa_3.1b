@@ -2,11 +2,11 @@
   <section class="page-section">
     <b-container>
      <HeaderPage title="Gestão de Utilizadores"/>
-      
+
       <!--MENU TOPO-->
       <b-row class="mb-4">
-        <b-col cols="1"></b-col>
-        <b-col>
+
+        <b-col cols="12" lg="12" xl="11" class="mx-auto">
           <router-link
             :to="{name:'addUser'}"
             tag="button"
@@ -18,13 +18,14 @@
             class="btn btn-outline-info mr-2 mt-2"
           ><i class="fas fa-bars"></i> MENU PRINCIPAL</router-link>
         </b-col>
-        <b-col cols="1"></b-col>
+
       </b-row>
 
       <!-- TABELA -->
       <b-row>
-        <b-col cols="1"></b-col>
-        <b-col>
+
+        <b-col cols="12" lg="12" xl="11" class="mx-auto">
+          <div class="list-table-scroll" role="region" aria-label="Tabela de registos" tabindex="0">
           <table class="table table-striped">
             <thead class="thead-dark">
               <tr>
@@ -63,8 +64,9 @@
               </tr>
             </tbody>
           </table>
+          </div>
         </b-col>
-        <b-col cols="1"></b-col>
+
       </b-row>
     </b-container>
   </section>
@@ -169,3 +171,13 @@ export default {
   }
 };
 </script>
+<style scoped>
+.list-table-scroll {
+  overflow-x: auto;
+}
+@media (min-width: 992px) {
+  .list-table-scroll td:last-child {
+    min-width: 22rem;
+  }
+}
+</style>

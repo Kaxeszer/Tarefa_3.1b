@@ -151,7 +151,21 @@ const routes = [
 const router = new VueRouter({
   mode: "history",
   base: process.env.BASE_URL,
-  routes
+  routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) return savedPosition;
+    if (to.hash && document.getElementById(to.hash.slice(1))) {
+      return { selector: to.hash };
+    }
+  }
+});
+
+router.onReady(() => {
+  Vue.nextTick(() => {
+    const hash = router.currentRoute.hash;
+    const target = hash && document.getElementById(hash.slice(1));
+    if (target) target.scrollIntoView();
+  });
 });
 
 export default router;
