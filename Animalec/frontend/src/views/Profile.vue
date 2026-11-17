@@ -123,7 +123,9 @@ export default {
     },
     setCurrentDateTime(paramDate) {
       const date = new Date(paramDate);
-      return date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDay();
+      return (
+        date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate()
+      );
     },
     showRanking() {
       router.push({name: 'ranking'})

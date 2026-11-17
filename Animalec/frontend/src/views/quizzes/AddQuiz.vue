@@ -144,13 +144,24 @@ export default {
     },
 
     add() {
-      this.questions = this.questions.map(question => question["id"]);
+      if (
+        !Array.isArray(this.questions) ||
+        !this.questions.length ||
+        this.questions.some(question => !question.id)
+      ) {
+        this.$alert(
+          "Adiciona pelo menos uma questão e seleciona todas as questões.",
+          "Erro de validação do formulário",
+          "error"
+        );
+        return;
+      }
       this.$store
         .dispatch(`quiz/${ADD_QUIZ}`, {
           name: this.name,
           level: this.level,
           points: this.points,
-          questions: this.questions
+          questions: this.questions.map(question => question.id)
         })
         .then(
           () => {

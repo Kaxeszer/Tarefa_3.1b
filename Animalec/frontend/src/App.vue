@@ -1,5 +1,5 @@
 <template>
-  <b-container fluid>
+  <b-container fluid id="page-top">
     <NavBar></NavBar>
     <router-view />
   </b-container>

@@ -1,18 +1,62 @@
 <template>
   <section class="page-section">
     <b-container>
-      <HeaderPage :title="animal.name" />
-      <b-row>
+      <HeaderPage :title="animal ? animal.name : 'Animal'" />
+      <p v-if="loading" role="status">A carregar o animal...</p>
+      <p v-else-if="loadError" class="alert alert-danger" role="alert">
+        {{ loadError }}
+      </p>
+      <router-link
+        v-if="loadError"
+        :to="{ name: 'animals' }"
+        class="btn btn-outline-info"
+        >VOLTAR</router-link
+      >
+      <b-row v-if="animal">
         <b-col>
           <b-card class="overflow-hidden" style="max-width: 1540px; ">
             <b-row>
               <b-col md="6" align="center">
-                <b-card-img :src="animal.links[0].url" class="rounded-0 mb-2"></b-card-img>
+                <b-card-img
+                  v-if="
+                    currentMedia &&
+                      currentMedia.types !== 'video' &&
+                      currentMedia.types !== 'sound'
+                  "
+                  :src="currentMedia.url"
+                  class="rounded-0 mb-2"
+                ></b-card-img>
+                <iframe
+                  v-else-if="currentMedia && currentMedia.types === 'video'"
+                  :src="currentMedia.url"
+                  title="Vídeo do animal"
+                  class="w-100"
+                  height="240"
+                  allowfullscreen
+                ></iframe>
+                <audio
+                  v-else-if="currentMedia && currentMedia.types === 'sound'"
+                  :src="currentMedia.url"
+                  controls
+                  class="w-100"
+                ></audio>
+                <p v-else>Sem elementos multimédia disponíveis.</p>
                 <br />
-                <b-button variant="danger" class="mr-2" @click="setComment()">
-                  <i class="fas fa-arrow-alt-circle-left"></i>
-                </b-button>&nbsp;1 de 3&nbsp;
-                <b-button variant="danger" class="mr-2" @click="setComment()">
+                <b-button
+                  variant="danger"
+                  class="mr-2"
+                  @click="changeMedia(-1)"
+                  :disabled="mediaLinks.length < 2"
+                >
+                  <i class="fas fa-arrow-alt-circle-left"></i> </b-button
+                >&nbsp;{{ mediaLinks.length ? mediaIndex + 1 : 0 }} de
+                {{ mediaLinks.length }}&nbsp;
+                <b-button
+                  variant="danger"
+                  class="mr-2"
+                  @click="changeMedia(1)"
+                  :disabled="mediaLinks.length < 2"
+                >
                   <i class="fas fa-arrow-alt-circle-right"></i>
                 </b-button>
               </b-col>
@@ -69,7 +113,8 @@
                       <b-button
                         variant="outline-success"
                         class="mr-2"
-                        @click="showVideo(animal.links[1].url)"
+                        v-if="videoLink"
+                        @click="showVideo(videoLink.url)"
                       >
                         <i class="fas fa-video"></i> VER VÍDEO
                       </b-button>
@@ -97,7 +142,7 @@
 
 <script>
 import HeaderPage from "@/components/HeaderPage.vue";
-import { EDIT_ANIMAL } from "@/store/animals/animal.constants";
+import { EDIT_ANIMAL, FETCH_ANIMALS } from "@/store/animals/animal.constants";
 import { mapGetters } from "vuex";
 export default {
   name: "Animal",
@@ -106,17 +151,37 @@ export default {
   },
   data: function() {
     return {
-      animal: "",
+      animal: null,
+      loading: true,
+      loadError: "",
+      mediaIndex: 0,
       comment: ""
     };
   },
   computed: {
+    mediaLinks() {
+      return this.animal
+        ? this.animal.links.filter(link => link && link.url)
+        : [];
+    },
+    currentMedia() {
+      return this.mediaLinks[this.mediaIndex];
+    },
+    videoLink() {
+      return this.mediaLinks.find(link => link.types === "video");
+    },
     ...mapGetters("animal", ["getAnimalsById", "getMessage"]),
     ...mapGetters("auth", ["getProfile"]),
     ...mapGetters("user", ["getUsersById","getNameById"]),
     ...mapGetters(["getUserLevelByPoints"])
   },
   methods: {
+    changeMedia(direction) {
+      if (this.mediaLinks.length)
+        this.mediaIndex =
+          (this.mediaIndex + direction + this.mediaLinks.length) %
+          this.mediaLinks.length;
+    },
     showVideo(videoUrl) {
       this.$fire({
         title: "<strong>Vídeo</strong>",
@@ -156,6 +221,14 @@ export default {
       return comments;
     },
     setComment() {
+      if (!this.comment.trim()) {
+        this.$alert(
+          "Escreve um comentário antes de enviar.",
+          "Comentários",
+          "info"
+        );
+        return;
+      }
       this.animal.comments.push({
         body: this.comment,
         user: this.getProfile._id,
@@ -177,20 +250,42 @@ export default {
         "-" +
         (today.getMonth() + 1) +
         "-" +
-        today.getDay();
+        today.getDate();
       const time = today.getHours() + ":" + today.getMinutes();
       return `${date} ${time}`;
     },
     setCurrentDateTime(commentDate) {
       const date = new Date(commentDate);
       const formatDate =
-        date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDay();
+        date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate();
       const formatTime = date.getHours() + ":" + date.getMinutes();
       return `${formatDate} ${formatTime}`;
     }
   },
-  created() {
-    this.animal = this.getAnimalsById(this.$route.params.animalId);
+  async created() {
+    try {
+      let record = this.getAnimalsById(this.$route.params.animalId);
+      if (!record) {
+        await this.$store.dispatch(`animal/${FETCH_ANIMALS}`);
+        record = this.getAnimalsById(this.$route.params.animalId);
+      }
+      if (!record) throw new Error("Animal não encontrado.");
+      this.animal = JSON.parse(JSON.stringify(record));
+      this.animal.links = Array.isArray(this.animal.links)
+        ? this.animal.links.filter(Boolean)
+        : [];
+      this.animal.comments = Array.isArray(this.animal.comments)
+        ? this.animal.comments
+        : [];
+      this.animal.evaluation = Array.isArray(this.animal.evaluation)
+        ? this.animal.evaluation
+        : [];
+    } catch (error) {
+      this.animal = null;
+      this.loadError = error.message || "Não foi possível carregar o animal.";
+    } finally {
+      this.loading = false;
+    }
   }
 };
 </script>

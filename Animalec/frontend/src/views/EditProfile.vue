@@ -100,6 +100,7 @@
 import { EDIT_USER } from "@/store/users/user.constants";
 import HeaderPage from "@/components/HeaderPage.vue"
 import router from "@/router";
+import { STORAGE_USER_PROFILE } from "@/store/constants";
 import { mapGetters } from "vuex";
 
 export default {
@@ -113,12 +114,33 @@ export default {
     };
   },
   computed: {
-    ...mapGetters("auth", ["getProfile"])
+    ...mapGetters("auth", ["getProfile"]),
+    ...mapGetters("user", ["getMessage"])
   },
   methods: {
     update() {
       this.$store.dispatch(`user/${EDIT_USER}`, this.$data.user).then(
         () => {
+          Object.assign(this.getProfile, {
+            name: this.user.name,
+            birth_date: this.user.birth_date,
+            description: this.user.description,
+            location: JSON.parse(JSON.stringify(this.user.location))
+          });
+          try {
+            localStorage.setItem(
+              STORAGE_USER_PROFILE,
+              JSON.stringify(this.getProfile)
+            );
+          } catch (error) {
+            this.$alert(
+              "Perfil atualizado, mas não foi possível guardar os dados da sessão neste navegador.",
+              "Informação",
+              "info"
+            );
+            router.push({ name: "profile" });
+            return;
+          }
           this.$alert(
             this.getMessage,
             "Perfil atualizado!",
@@ -133,7 +155,11 @@ export default {
     }
   },
   created() {
-    this.user = this.getProfile;
+    this.user = JSON.parse(JSON.stringify(this.getProfile));
+    this.user.birth_date =
+      typeof this.user.birth_date === "string"
+        ? this.user.birth_date.slice(0, 10)
+        : "";
   }
 };
 </script>

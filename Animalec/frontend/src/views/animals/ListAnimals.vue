@@ -120,10 +120,16 @@ export default {
     viewAnimal(id) {
       const animal = this.animals.find(animal => animal._id === id);
 
+      if (!animal)
+        return this.$alert("Animal não encontrado.", "Erro", "error");
+      const links = Array.isArray(animal.links) ? animal.links : [];
+      const photo = links.find(
+        link => link && link.url && (link.types === "photo" || !link.types)
+      );
       this.$fire({
         title: animal.name,
         html: this.generateTemplate(animal),
-        imageUrl: animal.links[0].url,
+        imageUrl: photo ? photo.url : undefined,
         imageWidth: 400,
         imageHeight: 200,
         imageAlt: "Imagem desconhecida"
@@ -132,15 +138,22 @@ export default {
 
     generateTemplate(animal) {
       let response = `
-          <h4>Grupo:</b> ${animal.group}</h4>
-          <h5>(nível:</b> ${animal.level})</h5>
-          <p>${animal.description}</p> 
+          <h4>Grupo: ${animal.group || "Não indicado"}</h4>
+          <h5>(nível: ${
+            animal.level == null ? "Não indicado" : animal.level
+          })</h5>
+          <p>${animal.description || ""}</p>
           <p>Elementos multimédia:
         `;
-      for (const link of animal.links) {
+      for (const link of Array.isArray(animal.links) ? animal.links : []) {
+        if (!link || !link.url) continue;
         response += ` <a href='${link.url}' target='_blank'>${link.types}</a>`;
       }
-      response += `</p><p>Comentários: ${animal.comments.length} Avaliações: ${animal.evaluation.length}</p> `;
+      response += `</p><p>Comentários: ${
+        Array.isArray(animal.comments) ? animal.comments.length : 0
+      } Avaliações: ${
+        Array.isArray(animal.evaluation) ? animal.evaluation.length : 0
+      }</p> `;
       return response;
     },
     removeAnimal(id) {
@@ -151,10 +164,15 @@ export default {
         { confirmButtonText: "OK", cancelButtonText: "Cancelar" }
       ).then(
         () => {
-          this.$store.dispatch(`animal/${REMOVE_ANIMAL}`, id).then(() => {
-            this.$alert(this.getMessage, "Animal removido!", "success");
-            this.fetchAnimals();
-          });
+          this.$store.dispatch(`animal/${REMOVE_ANIMAL}`, id).then(
+            () => {
+              this.$alert(this.getMessage, "Animal removido!", "success");
+              this.fetchAnimals();
+            },
+            err => {
+              this.$alert(`${err.message}`, "Erro", "error");
+            }
+          );
         },
         () => {
           this.$alert("Remoção cancelada!", "Informação", "info");

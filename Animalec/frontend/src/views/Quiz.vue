@@ -1,18 +1,30 @@
 <template>
   <section class="page-section">
     <b-container>
-      <HeaderPage :title="'Quiz nº' + quiz.level + ' - ' + quiz.name" />
-      <b-row>
+      <HeaderPage
+        :title="quiz ? 'Quiz nº' + quiz.level + ' - ' + quiz.name : 'Quiz'"
+      />
+      <p v-if="loading" role="status">A carregar o quiz...</p>
+      <p v-else-if="loadError" class="alert alert-danger" role="alert">
+        {{ loadError }}
+      </p>
+      <router-link
+        v-if="loadError"
+        :to="{ name: 'quizzes' }"
+        class="btn btn-outline-info"
+        >VOLTAR</router-link
+      >
+      <b-row v-if="quiz">
         <b-col cols="1"></b-col>
         <b-col cols="10" align="right">{{seconds}}</b-col>
         <b-col cols="1"></b-col>
       </b-row>
-      <b-row>
+      <b-row v-if="quiz">
         <b-col cols="1"></b-col>
         <b-col cols="10">
           <div>
             <b-card no-body>
-              <b-tabs pills card vertical>
+              <b-tabs v-model="activeTab" pills card vertical>
                 <b-tab
                   :disabled="currentQuestion !== index + 1"
                   v-for="(question, index) in quiz.questions"
@@ -68,7 +80,9 @@
                       <router-link :to="{name: 'home'}" tag="b-button" variant="outline-success" class="mr-2">
                         <i class="fas fa-home"></i> PÁGINA PRINCIPAL
                       </router-link>
-                      <b-button variant="outline-info" @click="evaluate()">VER ANIMAIS</b-button>
+                      <b-button variant="outline-info" @click="showAnimals()"
+                        >VER ANIMAIS</b-button
+                      >
                     </div>
                     <div v-else>
                       <i class="fas fa-frown fa-3x"></i>
@@ -77,10 +91,12 @@
                       <br />
                       <b-button
                         variant="outline-success"
-                        @click="evaluate()"
+                        @click="restartQuiz()"
                         class="mr-2"
                       >JOGAR NOVAMENTE ESTE QUIZ</b-button>
-                      <b-button variant="outline-info" @click="evaluate()">VER ANIMAIS</b-button>
+                      <b-button variant="outline-info" @click="showAnimals()"
+                        >VER ANIMAIS</b-button
+                      >
                     </div>
                   </b-card-text>
                 </b-tab>
@@ -91,15 +107,14 @@
         <b-col cols="1"></b-col>
       </b-row>
     </b-container>
-    <pre>
-    {{this.$data}}
-  </pre>
   </section>
 </template>
 
 <script>
 import HeaderPage from "@/components/HeaderPage.vue";
 import { mapGetters } from "vuex";
+import router from "@/router";
+import { FETCH_QUIZZES } from "@/store/quizzes/quiz.constants";
 import { EDIT_USER } from "@/store/users/user.constants";
 
 export default {
@@ -109,7 +124,12 @@ export default {
   },
   data: function() {
     return {
-      quiz: "",
+      quiz: null,
+      loading: true,
+      loadError: "",
+      activeTab: 0,
+      timer: null,
+      evaluated: false,
       option: "",
       currentQuestion: 1,
       answers: [],
@@ -123,26 +143,58 @@ export default {
     ...mapGetters("quiz", ["getQuizById"])
   },
   methods: {
+    showAnimals() {
+      router.push({ name: "animals" });
+    },
+    stopTimer() {
+      if (this.timer !== null) clearInterval(this.timer);
+      this.timer = null;
+    },
+    restartQuiz() {
+      this.stopTimer();
+      this.option = "";
+      this.currentQuestion = 1;
+      this.answers = [];
+      this.correctAnswers = 0;
+      this.seconds = 30;
+      this.activeTab = 0;
+      this.evaluated = false;
+      this.timer = setInterval(() => {
+        this.seconds -= 1;
+        if (this.seconds <= 0) this.evaluate();
+      }, 1000);
+    },
     setAnswer() {
+      if (this.evaluated) return;
+      if (!this.option) {
+        this.$alert("Seleciona uma resposta.", "Resposta", "info");
+        return;
+      }
       this.answers.push(this.option);
+      this.option = "";
       this.currentQuestion += 1;
+      this.activeTab = this.currentQuestion - 1;
       if (this.currentQuestion > this.quiz.questions.length) {
         this.evaluate();
       }
     },
     evaluate() {
-      let i = 0;
-      for (const question of this.quiz.questions) {
-        const id = question.answers.filter(answer => answer.correct === true)[0]
-          ._id;
-        if (id == this.answers[i]) {
-          this.correctAnswers += 1;
-        }
-        i++;
-      }
-      if (this.correctAnswers === this.quiz.questions.length) {
+      if (this.evaluated || !this.quiz) return;
+      this.evaluated = true;
+      this.stopTimer();
+      this.correctAnswers = this.quiz.questions.reduce(
+        (total, question, index) => {
+          const correct = question.answers.find(answer => answer.correct);
+          return (
+            total + (correct && correct._id === this.answers[index] ? 1 : 0)
+          );
+        },
+        0
+      );
+      this.currentQuestion = this.quiz.questions.length + 1;
+      this.activeTab = this.quiz.questions.length;
+      if (this.correctAnswers === this.quiz.questions.length)
         this.setScore(this.quiz.points);
-      }
     },
     setScore(points) {
       const user = this.getProfile 
@@ -150,25 +202,46 @@ export default {
       user.gamification.quiz += 1
       
       this.$store.dispatch(`user/${EDIT_USER}`, user).then(
-        () => {
-          //this.$alert("Score atualizado!", "Utilizador atualizado!", "success");
-          //router.push({ name: "home" });
-        },
+        () => {},
         err => {
           this.$alert(`${err.message}`, "Erro", "error");
         }
       );
     }
   },
-  created() {
-    this.quiz = this.getQuizById(this.$route.params.quizId);
-    let x = setInterval(function() {
-      this.seconds -= 1;
-      if (this.seconds < 0) {
-        clearInterval(x);
-        this.seconds = "EXPIRED";
+  async created() {
+    try {
+      let record = this.getQuizById(this.$route.params.quizId);
+      if (!record) {
+        await this.$store.dispatch(`quiz/${FETCH_QUIZZES}`);
+        record = this.getQuizById(this.$route.params.quizId);
       }
-    }, 1000);
+      if (!record) throw new Error("Quiz não encontrado.");
+      if (
+        !Array.isArray(record.questions) ||
+        !record.questions.length ||
+        record.questions.some(
+          question =>
+            !question ||
+            !Array.isArray(question.answers) ||
+            !question.answers.some(answer => answer.correct)
+        )
+      ) {
+        throw new Error(
+          "Este quiz não tem questões e respostas válidas para jogar."
+        );
+      }
+      this.quiz = JSON.parse(JSON.stringify(record));
+      this.restartQuiz();
+    } catch (error) {
+      this.quiz = null;
+      this.loadError = error.message || "Não foi possível carregar o quiz.";
+    } finally {
+      this.loading = false;
+    }
+  },
+  beforeDestroy() {
+    this.stopTimer();
   }
 };
 </script>

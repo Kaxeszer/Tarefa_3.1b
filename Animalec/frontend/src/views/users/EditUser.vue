@@ -7,7 +7,17 @@
       <b-row>
         <b-col cols="2"></b-col>
         <b-col cols="8">
-          <form @submit.prevent="update">
+          <p v-if="loading" role="status">A carregar o registo...</p>
+          <p v-else-if="loadError" class="alert alert-danger" role="alert">
+            {{ loadError }}
+          </p>
+          <router-link
+            v-if="loadError"
+            :to="{ name: 'listUsers' }"
+            class="btn btn-outline-info"
+            >VOLTAR À LISTAGEM</router-link
+          >
+          <form v-if="user && !loading" @submit.prevent="update">
             <div class="form-group">
               <input
                 v-model="user.name"
@@ -140,7 +150,7 @@
 </template>
 
 <script>
-import { EDIT_USER } from "@/store/users/user.constants";
+import { EDIT_USER, FETCH_USERS } from "@/store/users/user.constants";
 import HeaderPage from "@/components/HeaderPage.vue"
 import router from "@/router";
 import { mapGetters } from "vuex";
@@ -152,7 +162,9 @@ export default {
   },
   data: () => {
     return {
-      user: {}
+      user: null,
+      loading: true,
+      loadError: ""
     };
   },
   computed: {
@@ -175,8 +187,37 @@ export default {
       );
     }
   },
-  created() {
-    this.user = this.getUsersById(this.$route.params.userId);
+  async created() {
+    try {
+      let record = this.getUsersById(this.$route.params.userId);
+      if (!record) {
+        await this.$store.dispatch(`user/${FETCH_USERS}`);
+        record = this.getUsersById(this.$route.params.userId);
+      }
+      if (!record) throw new Error("Utilizador: registo não encontrado.");
+      this.user = JSON.parse(JSON.stringify(record));
+      this.user.location = Object.assign(
+        { city: "", district: "", country: "" },
+        this.user.location
+      );
+      this.user.auth = Object.assign(
+        { username: "", password: "" },
+        this.user.auth
+      );
+      this.user.gamification = Object.assign(
+        { points: 0, quiz: 0 },
+        this.user.gamification
+      );
+      this.user.birth_date =
+        typeof this.user.birth_date === "string"
+          ? this.user.birth_date.slice(0, 10)
+          : "";
+    } catch (error) {
+      this.user = null;
+      this.loadError = error.message || "Não foi possível carregar o registo.";
+    } finally {
+      this.loading = false;
+    }
   }
 };
 </script>

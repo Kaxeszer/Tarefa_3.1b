@@ -181,16 +181,40 @@
           <!-- Footer Social Icons -->
           <div class="col-lg-4 mb-5 mb-lg-0">
             <h4 class="text-uppercase mb-4">PRESENÇA DIGITAL</h4>
-            <a class="btn btn-outline-light btn-social mx-1" href="#">
+            <a
+              class="btn btn-outline-light btn-social mx-1"
+              aria-disabled="true"
+              tabindex="-1"
+              title="Ligação indisponível"
+              @click.prevent
+            >
               <i class="fab fa-fw fa-facebook-f"></i>
             </a>
-            <a class="btn btn-outline-light btn-social mx-1" href="#">
+            <a
+              class="btn btn-outline-light btn-social mx-1"
+              aria-disabled="true"
+              tabindex="-1"
+              title="Ligação indisponível"
+              @click.prevent
+            >
               <i class="fab fa-fw fa-twitter"></i>
             </a>
-            <a class="btn btn-outline-light btn-social mx-1" href="#">
+            <a
+              class="btn btn-outline-light btn-social mx-1"
+              aria-disabled="true"
+              tabindex="-1"
+              title="Ligação indisponível"
+              @click.prevent
+            >
               <i class="fab fa-fw fa-linkedin-in"></i>
             </a>
-            <a class="btn btn-outline-light btn-social mx-1" href="#">
+            <a
+              class="btn btn-outline-light btn-social mx-1"
+              aria-disabled="true"
+              tabindex="-1"
+              title="Ligação indisponível"
+              @click.prevent
+            >
               <i class="fab fa-fw fa-dribbble"></i>
             </a>
           </div>

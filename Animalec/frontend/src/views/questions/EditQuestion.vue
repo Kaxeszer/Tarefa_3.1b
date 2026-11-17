@@ -7,7 +7,17 @@
       <b-row>        
         <b-col cols="2"></b-col>
         <b-col cols="8">
-          <form @submit.prevent="update">
+          <p v-if="loading" role="status">A carregar o registo...</p>
+          <p v-else-if="loadError" class="alert alert-danger" role="alert">
+            {{ loadError }}
+          </p>
+          <router-link
+            v-if="loadError"
+            :to="{ name: 'listQuestions' }"
+            class="btn btn-outline-info"
+            >VOLTAR À LISTAGEM</router-link
+          >
+          <form v-if="question && !loading" @submit.prevent="update">
             <div class="form-group">
               <input
                 v-model="question.question"
@@ -108,7 +118,10 @@
 </template>
 
 <script>
-import { EDIT_QUESTION } from "@/store/questions/question.constants";
+import {
+  EDIT_QUESTION,
+  FETCH_QUESTIONS
+} from "@/store/questions/question.constants";
 import router from "@/router";
 import HeaderPage from "@/components/HeaderPage.vue"
 import { mapGetters } from "vuex";
@@ -120,7 +133,9 @@ export default {
   },
   data: () => {
     return {
-      question: {}
+      question: null,
+      loading: true,
+      loadError: ""
     };
   },
   computed: {
@@ -128,6 +143,21 @@ export default {
   },
   methods: {
     update() {
+      if (
+        !Array.isArray(this.question.answers) ||
+        !this.question.answers.length ||
+        this.question.answers.some(
+          answer => !answer.title || !answer.title.trim()
+        ) ||
+        !this.question.answers.some(answer => answer.correct)
+      ) {
+        this.$alert(
+          "Adiciona pelo menos uma resposta preenchida e assinala uma resposta correta.",
+          "Erro de validação do formulário",
+          "error"
+        );
+        return;
+      }
       this.$store
         .dispatch(`question/${EDIT_QUESTION}`, this.$data.question)
         .then(
@@ -154,8 +184,31 @@ export default {
       this.question.answers.splice(index, 1);
     }
   },
-  created() {
-    this.question = this.getQuestionById(this.$route.params.questionId);
+  async created() {
+    try {
+      let record = this.getQuestionById(this.$route.params.questionId);
+      if (!record) {
+        await this.$store.dispatch(`question/${FETCH_QUESTIONS}`);
+        record = this.getQuestionById(this.$route.params.questionId);
+      }
+      if (!record) throw new Error("Questão: registo não encontrado.");
+      this.question = JSON.parse(JSON.stringify(record));
+      this.question.answers = Array.isArray(this.question.answers)
+        ? this.question.answers
+            .filter(Boolean)
+            .map(answer =>
+              Object.assign(
+                { title: "", description: "", correct: false },
+                answer
+              )
+            )
+        : [];
+    } catch (error) {
+      this.question = null;
+      this.loadError = error.message || "Não foi possível carregar o registo.";
+    } finally {
+      this.loading = false;
+    }
   }
 };
 </script>

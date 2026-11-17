@@ -7,7 +7,17 @@
       <b-row>
         <b-col cols="2"></b-col>
         <b-col cols="8">
-          <form @submit.prevent="update">
+          <p v-if="loading" role="status">A carregar o registo...</p>
+          <p v-else-if="loadError" class="alert alert-danger" role="alert">
+            {{ loadError }}
+          </p>
+          <router-link
+            v-if="loadError"
+            :to="{ name: 'listAnimals' }"
+            class="btn btn-outline-info"
+            >VOLTAR À LISTAGEM</router-link
+          >
+          <form v-if="animal && !loading" @submit.prevent="update">
             <div class="form-group">
               <input
                 v-model="animal.name"
@@ -103,7 +113,7 @@
 </template>
 
 <script>
-import { EDIT_ANIMAL } from "@/store/animals/animal.constants";
+import { EDIT_ANIMAL, FETCH_ANIMALS } from "@/store/animals/animal.constants";
 import HeaderPage from "@/components/HeaderPage.vue";
 import router from "@/router";
 import { mapGetters } from "vuex";
@@ -115,7 +125,9 @@ export default {
   },
   data: () => {
     return {
-      animal: {}
+      animal: null,
+      loading: true,
+      loadError: ""
     };
   },
   computed: {
@@ -138,8 +150,46 @@ export default {
       );
     }
   },
-  created() {
-    this.animal = this.getAnimalsById(this.$route.params.animalId);
+  async created() {
+    try {
+      let record = this.getAnimalsById(this.$route.params.animalId);
+      if (!record) {
+        await this.$store.dispatch(`animal/${FETCH_ANIMALS}`);
+        record = this.getAnimalsById(this.$route.params.animalId);
+      }
+      if (!record) throw new Error("Animal: registo não encontrado.");
+      this.animal = JSON.parse(JSON.stringify(record));
+      const links = Array.isArray(this.animal.links)
+        ? this.animal.links.filter(Boolean)
+        : [];
+      this.animal.links = ["photo", "video", "sound"]
+        .map(types => {
+          let index = links.findIndex(link => link.types === types);
+          if (index === -1 && links[0] && !links[0].types) index = 0;
+          if (index === -1) return { types, url: "" };
+          const link = links.splice(index, 1)[0];
+          return Object.assign({}, link, {
+            types: link.types || types,
+            url: link.url || ""
+          });
+        })
+        .concat(links);
+      this.animal.comments = Array.isArray(this.animal.comments)
+        ? this.animal.comments
+        : [];
+      this.animal.evaluation = Array.isArray(this.animal.evaluation)
+        ? this.animal.evaluation
+        : [];
+      if (this.animal.group)
+        this.animal.group = this.animal.group
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "");
+    } catch (error) {
+      this.animal = null;
+      this.loadError = error.message || "Não foi possível carregar o registo.";
+    } finally {
+      this.loading = false;
+    }
   }
 };
 </script>

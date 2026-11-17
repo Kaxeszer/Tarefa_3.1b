@@ -64,9 +64,9 @@
                       v-model.lazy="answer.title"
                       type="text"
                       class="form-control"
-                      id='txtAnswer'
-                      :placeholder="setPlaceHolder(index+1)"
-                      
+                      id="txtAnswer"
+                      :placeholder="setPlaceHolder(index + 1)"
+                      required
                     />
                   </div>
                   <div class="col-md-2">
@@ -136,6 +136,19 @@ export default {
   },
   methods: {
     add() {
+      if (
+        !Array.isArray(this.answers) ||
+        !this.answers.length ||
+        this.answers.some(answer => !answer.title || !answer.title.trim()) ||
+        !this.answers.some(answer => answer.correct)
+      ) {
+        this.$alert(
+          "Adiciona pelo menos uma resposta preenchida e assinala uma resposta correta.",
+          "Erro de validação do formulário",
+          "error"
+        );
+        return;
+      }
       this.$store.dispatch(`question/${ADD_QUESTION}`, this.$data).then(
         () => {
           this.$alert(this.getMessage, "Questão adicionada!", "success");

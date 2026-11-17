@@ -2,7 +2,7 @@
   <b-col cols="4">
     <b-card
       :title="animal.name"
-      :img-src="animal.links[0].url"
+      :img-src="photoURL"
       img-alt="Image"
       img-top
       tag="article"
@@ -15,10 +15,10 @@
       </b-card-text>
       <b-card-text>{{animal.description}}</b-card-text>
       <b-card-text align="left">
-        <i class="fas fa-star fa-lg" :style="{color}" @click="evaluate()"></i>
-        {{animal.evaluation.length}}
+        <i class="fas fa-star fa-lg" :style="{ color }" @click="evaluate()"></i>
+        {{ Array.isArray(animal.evaluation) ? animal.evaluation.length : 0 }}
         <i class="fas fa-comment fa-lg ml-2"></i>
-        {{animal.comments.length}}
+        {{ Array.isArray(animal.comments) ? animal.comments.length : 0 }}
       </b-card-text>
 
       <router-link
@@ -30,10 +30,19 @@
       >
         <i class="fas fa-search"></i> ver animal
       </router-link>
-      <b-button variant="info" :href="'https://www.facebook.com/sharer/sharer.php?u=' + animal.links[0].url" target="_blank">
+      <b-button
+        variant="info"
+        :disabled="!photoURL"
+        :href="
+          photoURL
+            ? 'https://www.facebook.com/sharer/sharer.php?u=' +
+              encodeURIComponent(photoURL)
+            : undefined
+        "
+        target="_blank"
+      >
         <i class="fab fa-facebook"></i> Partilhar
       </b-button>
-
     </b-card>
   </b-col>
 </template>
@@ -50,9 +59,20 @@ export default {
       color: ""
     };
   },
+  computed: {
+    photoURL() {
+      const links = Array.isArray(this.animal.links) ? this.animal.links : [];
+      const photo = links.find(
+        link => link && link.url && (link.types === "photo" || !link.types)
+      );
+      return photo ? photo.url : undefined;
+    }
+  },
   methods: {
     ...mapGetters("auth", ["getProfile"]),
     evaluate() {
+      if (!Array.isArray(this.animal.evaluation))
+        this.$set(this.animal, "evaluation", []);
       if (!this.animal.evaluation.includes(this.getProfile()._id)) {
         this.animal.evaluation.push(this.getProfile()._id);
         this.color = "red";
@@ -77,7 +97,10 @@ export default {
     }
   },
   created() {
-    if (!this.animal.evaluation.includes(this.getProfile()._id)) {
+    if (
+      !Array.isArray(this.animal.evaluation) ||
+      !this.animal.evaluation.includes(this.getProfile()._id)
+    ) {
       this.color = "black";
     } else {
       this.color = "red";

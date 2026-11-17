@@ -151,14 +151,15 @@ export default {
         { confirmButtonText: "OK", cancelButtonText: "Cancelar" }
       ).then(
         () => {
-          this.$store.dispatch(`user/${REMOVE_USER}`, id).then(() => {
-            this.$alert(
-              this.getMessage,
-              "Utilizador removido!",
-              "success"
-            );
-            this.fetchUsers();
-          });
+          this.$store.dispatch(`user/${REMOVE_USER}`, id).then(
+            () => {
+              this.$alert(this.getMessage, "Utilizador removido!", "success");
+              this.fetchUsers();
+            },
+            err => {
+              this.$alert(`${err.message}`, "Erro", "error");
+            }
+          );
         },
         () => {
           this.$alert("Remoção cancelada!", "Informação", "info");

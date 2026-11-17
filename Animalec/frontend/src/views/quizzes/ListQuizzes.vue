@@ -136,19 +136,20 @@ export default {
     removeQuiz(id) {
       this.$confirm(
         "Se sim, clique em OK",
-        "Deseja mesmo remover a questão?",
+        "Deseja mesmo remover o quiz?",
         "warning",
         { confirmButtonText: "OK", cancelButtonText: "Cancelar" }
       ).then(
         () => {
-          this.$store.dispatch(`quiz/${REMOVE_QUIZ}`, id).then(() => {
-            this.$alert(
-              this.getMessage,
-              "Questão removida!",
-              "success"
-            );
-            this.fetchQuizzes();
-          });
+          this.$store.dispatch(`quiz/${REMOVE_QUIZ}`, id).then(
+            () => {
+              this.$alert(this.getMessage, "Quiz removido!", "success");
+              this.fetchQuizzes();
+            },
+            err => {
+              this.$alert(`${err.message}`, "Erro", "error");
+            }
+          );
         },
         () => {
           this.$alert("Remoção cancelada!", "Informação", "info");

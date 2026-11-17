@@ -93,7 +93,11 @@ export default {
           filterNameResult = animal.name.includes(this.filterName);
         }
         if (this.filterGroup != "todos") {
-          filterGroupResult = animal.group == this.filterGroup;
+          filterGroupResult =
+            String(animal.group || "")
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "") ===
+            this.filterGroup.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         }
         if (this.filterLevel != "todos") {
           filterLevelResult = animal.level == this.filterLevel;

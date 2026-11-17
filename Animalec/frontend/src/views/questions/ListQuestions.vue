@@ -144,14 +144,15 @@ export default {
         { confirmButtonText: "OK", cancelButtonText: "Cancelar" }
       ).then(
         () => {
-          this.$store.dispatch(`question/${REMOVE_QUESTION}`, id).then(() => {
-            this.$alert(
-              this.getMessage,
-              "Questão removida!",
-              "success"
-            );
-            this.fetchQuestions();
-          });
+          this.$store.dispatch(`question/${REMOVE_QUESTION}`, id).then(
+            () => {
+              this.$alert(this.getMessage, "Questão removida!", "success");
+              this.fetchQuestions();
+            },
+            err => {
+              this.$alert(`${err.message}`, "Erro", "error");
+            }
+          );
         },
         () => {
           this.$alert("Remoção cancelada!", "Informação", "info");

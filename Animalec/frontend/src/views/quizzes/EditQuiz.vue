@@ -6,7 +6,17 @@
       <b-row>
         <b-col cols="2"></b-col>
         <b-col cols="8">
-          <form @submit.prevent="update">
+          <p v-if="loading" role="status">A carregar o registo...</p>
+          <p v-else-if="loadError" class="alert alert-danger" role="alert">
+            {{ loadError }}
+          </p>
+          <router-link
+            v-if="loadError"
+            :to="{ name: 'listQuizzes' }"
+            class="btn btn-outline-info"
+            >VOLTAR À LISTAGEM</router-link
+          >
+          <form v-if="quiz && !loading" @submit.prevent="update">
             <div class="form-group">
               <input
                 v-model="quiz.name"
@@ -108,7 +118,7 @@
 </template>
 
 <script>
-import { EDIT_QUIZ } from "@/store/quizzes/quiz.constants";
+import { EDIT_QUIZ, FETCH_QUIZZES } from "@/store/quizzes/quiz.constants";
 import router from "@/router";
 import HeaderPage from "@/components/HeaderPage.vue"
 import { FETCH_QUESTIONS } from "@/store/questions/question.constants";
@@ -121,7 +131,9 @@ export default {
   },
   data: () => {
     return {
-      quiz: {},
+      quiz: null,
+      loading: true,
+      loadError: "",
       myQuestions: []
     };
   },
@@ -129,7 +141,9 @@ export default {
     ...mapGetters("quiz", ["getQuizById", "getMessage"]),
     ...mapGetters("question", ["getQuestions"]),
     getQuestionsByLevel() {
-      return this.myQuestions.filter(question => question.level == this.quiz.level);
+      return this.quiz
+        ? this.myQuestions.filter(question => question.level == this.quiz.level)
+        : [];
     }
   },
   methods: {
@@ -143,12 +157,29 @@ export default {
       this.quiz.questions.splice(index, 1);
     },
     update() {
+      if (
+        !Array.isArray(this.quiz.questions) ||
+        !this.quiz.questions.length ||
+        this.quiz.questions.some(question => !question.id)
+      ) {
+        this.$alert(
+          "Adiciona pelo menos uma questão e seleciona todas as questões.",
+          "Erro de validação do formulário",
+          "error"
+        );
+        return;
+      }
       this.$store
-        .dispatch(`quiz/${EDIT_QUIZ}`, this.$data.quiz)
+        .dispatch(
+          `quiz/${EDIT_QUIZ}`,
+          Object.assign({}, this.quiz, {
+            questions: this.quiz.questions.map(question => question.id)
+          })
+        )
         .then(
           () => {
-            this.$alert(this.getMessage, "Quiz atualizado!","success");
-            router.push({name: 'listQuizzes'});
+            this.$alert(this.getMessage, "Quiz atualizado!", "success");
+            router.push({ name: "listQuizzes" });
           },
           err => {
             this.$alert(`${err.message}`, "Erro", "error");
@@ -156,16 +187,33 @@ export default {
         );
     }
   },
-  created() {
-    this.quiz = this.getQuizById(this.$route.params.quizId);
-    this.$store.dispatch(`question/${FETCH_QUESTIONS}`).then(
-      () => {
-        this.myQuestions = this.getQuestions;
-      },
-      err => {
-        this.$alert(`${err.message}`, "Erro", "error");
+  async created() {
+    try {
+      let record = this.getQuizById(this.$route.params.quizId);
+      if (!record) {
+        await this.$store.dispatch(`quiz/${FETCH_QUIZZES}`);
+        record = this.getQuizById(this.$route.params.quizId);
       }
-    );
+      if (!record) throw new Error("Quiz: registo não encontrado.");
+      this.quiz = JSON.parse(JSON.stringify(record));
+      if (!this.getQuestions.length)
+        await this.$store.dispatch(`question/${FETCH_QUESTIONS}`);
+      this.myQuestions = this.getQuestions;
+      this.quiz.questions = (Array.isArray(this.quiz.questions)
+        ? this.quiz.questions
+        : []
+      ).map(question => ({
+        id:
+          typeof question === "string"
+            ? question
+            : (question && (question._id || question.id)) || ""
+      }));
+    } catch (error) {
+      this.quiz = null;
+      this.loadError = error.message || "Não foi possível carregar o registo.";
+    } finally {
+      this.loading = false;
+    }
   }
 };
 </script>
